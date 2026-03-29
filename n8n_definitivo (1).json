@@ -1,0 +1,168 @@
+{
+  "name": "Sistema Prenotazioni DEFINITIVO",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Prenotazione",
+        "formFields": {
+          "fields": [
+            {
+              "fieldLabel": "Nome",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Telefono",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Data",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Ora",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Servizio",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Standard"
+                  },
+                  {
+                    "option": "Premium"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "form",
+      "name": "Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const i=$input.first().json;\nif(!/^\\d{2}:\\d{2}$/.test(i.Ora)){return[{json:{errore:true,motivo:'Formato ora'}}];}\nconst [h,m]=i.Ora.split(':');\nif(h<9||h>=18){return[{json:{errore:true,motivo:'Fuori orario'}}];}\nconst d=new Date(i.Data);d.setHours(h,m);\nconst fine=new Date(d.getTime()+3600000);\nconst limiti={Standard:3,Premium:2};\nreturn[{json:{...i,slotKey:d.toISOString().slice(0,16),inizio:d.toISOString(),fine:fine.toISOString(),max:limiti[i.Servizio]||3}}];"
+      },
+      "id": "code",
+      "name": "Validazione",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{$json.errore}}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "rightValue": true
+            }
+          ]
+        }
+      },
+      "id": "if",
+      "name": "Check Errore",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Errore: {{$json.motivo}}"
+      },
+      "id": "resp_err",
+      "name": "Errore",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Prenotazione ricevuta ✅"
+      },
+      "id": "resp_ok",
+      "name": "OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        800,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "Validazione",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validazione": {
+      "main": [
+        [
+          {
+            "node": "Check Errore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Errore": {
+      "main": [
+        [
+          {
+            "node": "Errore",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
