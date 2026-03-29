@@ -1,0 +1,52 @@
+{
+  "name": "Prenotazioni Full",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Prenota",
+        "formFields": {
+          "fields": [
+            { "fieldLabel": "Nome", "fieldType": "text", "requiredField": true },
+            { "fieldLabel": "Email", "fieldType": "email", "requiredField": true },
+            { "fieldLabel": "Data", "fieldType": "date", "requiredField": true },
+            { "fieldLabel": "Ora", "fieldType": "text", "requiredField": true }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json: $input.first().json}];"
+      },
+      "id": "2",
+      "name": "Process",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Prenotazione ricevuta!"
+      },
+      "id": "3",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [600, 300]
+    }
+  ],
+  "connections": {
+    "Form": {
+      "main": [[{ "node": "Process", "type": "main", "index": 0 }]]
+    },
+    "Process": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}
